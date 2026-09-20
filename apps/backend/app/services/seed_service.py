@@ -5,6 +5,8 @@ from app.repositories.users import user_repo
 from app.repositories.trips import trip_repo
 from app.repositories.hotel_bookings import hotel_booking_repo
 from app.repositories.timeline import timeline_repo
+from app.repositories.disruptions import disruption_repo
+from app.repositories.rebookings import rebooking_repo
 
 logger = logging.getLogger("app.services.seed")
 
@@ -16,7 +18,17 @@ DEMO_HOTEL_ID = "hotel-london-langham"
 def seed_demo_data(force: bool = False) -> Dict[str, Any]:
     """
     Seeds demo traveler, trip (AMD -> DEL -> LHR) with two connected flights and one London hotel booking.
+    When force=True, cleanly removes any prior timeline events, rebookings, and disruptions.
     """
+    if force:
+        try:
+            timeline_repo.collection.delete_many({"trip_id": DEMO_TRIP_ID})
+            rebooking_repo.collection.delete_many({"trip_id": DEMO_TRIP_ID})
+            disruption_repo.collection.delete_many({"trip_id": DEMO_TRIP_ID})
+            logger.info("Cleaned previous timeline, rebookings, and disruptions for %s", DEMO_TRIP_ID)
+        except Exception as e:
+            logger.warning("Could not clean old demo records: %s", e)
+
     # 1. Seed demo user
     user_doc = {
         "id": DEMO_USER_ID,

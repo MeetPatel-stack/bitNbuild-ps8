@@ -21,6 +21,11 @@ class Settings(BaseSettings):
     )
     host: str = Field(default="0.0.0.0", validation_alias="HOST")
     port: int = Field(default=8000, validation_alias="PORT")
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000",
+        validation_alias=AliasChoices("CORS_ORIGINS"),
+        description="Allowed CORS origins (comma-separated)",
+    )
 
     model_config = SettingsConfigDict(
         env_file=os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"),

@@ -18,3 +18,23 @@
 
 /* One calm, shared background layer for the whole application. */
 .dot-pattern{position:fixed;inset:0;z-index:0;display:block;pointer-events:none}.site-shell>.top-glow{z-index:0;pointer-events:none}.site-shell>header,.site-shell>section,.site-shell>footer{position:relative;z-index:1}
+
+/* API Integration & State Enhancements */
+.outline-button:disabled{opacity:0.5;cursor:not-allowed}
+.outline-button:hover:not(:disabled){background:#ebf3f9}
+.outline-button.primary-action{background:#162433;color:#fff;border-color:#162433}
+.outline-button.primary-action:hover:not(:disabled){background:#243a50}
+.timeline-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.action-message{margin:14px 0 0;padding:10px 14px;border-radius:10px;background:#f3f7fa;border:1px solid #e2ecf3;color:#476378;font-size:11px}
+.action-message.error{background:#fdf2f3;border-color:#f8d7da;color:#8a2530}
+.resolution-filled{display:grid;gap:12px}
+.resolution-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;background:#e9f7ee;color:#2c7047;font-size:10px;font-weight:700}
+.resolution-details{display:grid;gap:8px;padding:12px 14px;border-radius:12px;background:#fff;border:1px solid #e4edf4}
+.resolution-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#6d8093}
+.resolution-row strong{color:#2a3e52}
+.empty-state{text-align:center;padding:40px 20px;color:#7e91a4}
+.flight-segments-list{display:grid;gap:16px;margin-top:20px}
+.flight-segment-item{padding:14px 16px;border-radius:14px;background:#fafcfe;border:1px solid #e7eff6}
+.flight-segment-item.is-cancelled{background:#fff8f8;border-color:#fce2e5}
+.flight-segment-item.is-rebooked{background:#f4fbf6;border-color:#d7eedf}
+
