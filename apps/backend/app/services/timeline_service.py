@@ -55,10 +55,10 @@ class TimelineService:
         logger.info("Recorded timeline event [%s] for trip %s", event_type, trip_id)
 
         # Broadcast event asynchronously to all connected WebSockets for this trip
-        await ws_manager.broadcast_to_trip(trip_id, {
-            "type": "TIMELINE_EVENT",
-            "event": saved_event,
-        })
+        # Flatten payload: frontend expects event fields at top level (event_type, id, title, etc.)
+        broadcast_payload = dict(saved_event)
+        broadcast_payload["type"] = broadcast_payload.get("event_type", event_type.value if hasattr(event_type, "value") else str(event_type))
+        await ws_manager.broadcast_to_trip(trip_id, broadcast_payload)
 
         return saved_event
 

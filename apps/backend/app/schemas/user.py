@@ -7,6 +7,7 @@ from app.schemas.common import MongoBaseModel, utc_now
 class UserBase(BaseModel):
     name: str = "Demo Traveler"
     email: str = "traveler@example.com"
+    hashed_password: Optional[str] = None
     phone: Optional[str] = "+1-555-0199"
     loyalty_tier: Optional[str] = "Gold"
     preferences: Dict[str, Any] = Field(

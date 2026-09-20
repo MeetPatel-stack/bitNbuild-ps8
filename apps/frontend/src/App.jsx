@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import api, { getWebSocketUrl } from './api'
+import { SignIn, SignUp } from './Auth'
 
 const navItems = [
   ['home', 'Home'],
@@ -222,6 +223,16 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [tripFilter, setTripFilter] = useState('All')
 
+  // Auth states
+  const [token, setToken] = useState(() => localStorage.getItem('token'))
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user'))
+    } catch {
+      return null
+    }
+  })
+
   // Data & API states
   const [apiTrips, setApiTrips] = useState([])
   const [selectedTripId, setSelectedTripId] = useState(null)
@@ -239,6 +250,25 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  const handleSignIn = (newToken, newUser) => {
+    localStorage.setItem('token', newToken)
+    localStorage.setItem('user', JSON.stringify(newUser))
+    setToken(newToken)
+    setUser(newUser)
+    goTo('trips')
+  }
+
+  const handleSignOut = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    setToken(null)
+    setUser(null)
+    setApiTrips([])
+    setSelectedTripId(null)
+    setSelectedTripDetails(null)
+    goTo('home')
+  }
+
   useEffect(() => {
     const onHash = () => setPage(window.location.hash.slice(1) || 'home')
     window.addEventListener('hashchange', onHash)
@@ -247,17 +277,15 @@ function App() {
 
   // 1. Initial load of trips from backend via Axios
   const loadTrips = async () => {
+    if (!token) {
+      setLoadingTrips(false)
+      return
+    }
     setLoadingTrips(true)
     try {
       const trips = await api.trips.fetchTrips()
-      if (Array.isArray(trips) && trips.length > 0) {
+      if (Array.isArray(trips)) {
         setApiTrips(trips)
-      } else {
-        // Auto-seed demo trip if backend DB is empty
-        const seeded = await api.demo.seedDemoData()
-        if (seeded?.trip) {
-          setApiTrips([seeded.trip])
-        }
       }
     } catch (err) {
       console.warn('Trips fetch error, using preview mode:', err)
@@ -269,7 +297,7 @@ function App() {
 
   useEffect(() => {
     loadTrips()
-  }, [])
+  }, [token])
 
   // Active trip calculation
   const displayTrips = apiTrips.length ? apiTrips.map(makeTrip) : sampleTrips
@@ -386,17 +414,24 @@ function App() {
       }))
     }
     const received = new Map(liveEvents.map((event) => [event.event_type || event.type, event]))
+    const isCompleted = received.has('PROCESS_COMPLETED') || received.has('PROCESS_FAILED')
     const active = demoEvents.find(([type]) => !received.has(type))?.[0]
 
-    return demoEvents.map(([event_type, title, description]) => {
-      const event = received.get(event_type)
-      return {
-        event_type,
-        title: event?.title || title,
-        description: event?.description || description,
-        state: event ? 'done' : event_type === active ? 'current' : 'future',
-      }
-    })
+    return demoEvents
+      .filter(([event_type]) => {
+        // If completed, only show events that actually happened
+        if (isCompleted && !received.has(event_type)) return false
+        return true
+      })
+      .map(([event_type, title, description]) => {
+        const event = received.get(event_type)
+        return {
+          event_type,
+          title: event?.title || title,
+          description: event?.description || description,
+          state: event ? 'done' : event_type === active ? 'current' : 'future',
+        }
+      })
   }, [liveEvents])
 
   // 3. Trigger flight cancellation simulation via Axios
@@ -494,9 +529,11 @@ function App() {
     <main className="site-shell">
       <DotPattern />
       <div className="top-glow" />
-      <Header {...{ page, goTo, menuOpen, setMenuOpen, connection }} />
+      <Header {...{ page, goTo, menuOpen, setMenuOpen, connection, token, handleSignOut }} />
 
-      {page === 'home' && <Home goTo={goTo} activeTrip={liveTrip} />}
+      {page === 'signin' && <SignIn onSignIn={handleSignIn} goTo={goTo} />}
+      {page === 'signup' && <SignUp onSignIn={handleSignIn} goTo={goTo} />}
+      {page === 'home' && <Home goTo={goTo} activeTrip={liveTrip} token={token} />}
       {page === 'trips' && (
         <Trips
           trips={displayTrips}
@@ -536,7 +573,7 @@ function App() {
   )
 }
 
-function Header({ page, goTo, menuOpen, setMenuOpen, connection }) {
+function Header({ page, goTo, menuOpen, setMenuOpen, connection, token, handleSignOut }) {
   const [isScrolled, setIsScrolled] = useState(false)
 
   useEffect(() => {
@@ -554,15 +591,23 @@ function Header({ page, goTo, menuOpen, setMenuOpen, connection }) {
           <span>Wayfinder</span>
         </button>
         <div className="nav-links">
-          {navItems.map(([key, label]) => (
-            <button
-              className={page === key ? 'active' : ''}
-              onClick={() => goTo(key)}
-              key={key}
-            >
-              {label}
-            </button>
-          ))}
+          {navItems.map(([key, label]) => {
+            if (!token && (key === 'trips' || key === 'activity' || key === 'online' || key === 'profile')) return null;
+            return (
+              <button
+                className={page === key ? 'active' : ''}
+                onClick={() => goTo(key)}
+                key={key}
+              >
+                {label}
+              </button>
+            );
+          })}
+          {token ? (
+            <button onClick={handleSignOut}>Sign Out</button>
+          ) : (
+            <button className={page === 'signin' ? 'active' : ''} onClick={() => goTo('signin')}>Sign In</button>
+          )}
         </div>
         <div className="nav-status">
           <i className={connection === 'online' ? 'pulse' : ''} />{' '}
@@ -603,7 +648,7 @@ const ArrowLink = ({ children, onClick }) => (
   </button>
 )
 
-function Home({ goTo, activeTrip }) {
+function Home({ goTo, activeTrip, token }) {
   const firstFlight = activeTrip?.flights?.[0]
   const origin = activeTrip?.origin || firstFlight?.origin || 'DEL'
   const destination = activeTrip?.destination || firstFlight?.destination || 'CDG'
@@ -623,7 +668,7 @@ function Home({ goTo, activeTrip }) {
           <p className="lead">
             Every reservation, every connection, and every unexpected turn — kept in one calm, clear view.
           </p>
-          <button className="primary-button" onClick={() => goTo('trips')}>
+          <button className="primary-button" onClick={() => token ? goTo('trips') : goTo('signup')}>
             Get Started <span>→</span>
           </button>
         </div>

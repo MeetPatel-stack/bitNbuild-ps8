@@ -20,6 +20,10 @@ const apiClient = axios.create({
 // Request interceptor: add timestamp or log in dev if needed
 apiClient.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     return config
   },
   (error) => Promise.reject(error),
@@ -29,6 +33,15 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    if (error.response?.status === 401) {
+      // Clear token on unauthorized
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      if (window.location.hash !== '#signin' && window.location.hash !== '#signup') {
+        window.location.hash = 'signin'
+      }
+    }
+
     const errorDetail =
       error.response?.data?.detail ||
       error.response?.data?.message ||

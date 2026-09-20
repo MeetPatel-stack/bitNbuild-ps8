@@ -12,17 +12,26 @@ class UserRepository(BaseRepository):
         return self.find_by_id(user_id)
 
     def create_or_update(self, user_dict: Dict[str, Any]) -> Dict[str, Any]:
-        user_id = user_dict.get("id") or "demo-user-1"
+        from bson import ObjectId
+        user_id = user_dict.get("id")
+        
         user_dict["updated_at"] = utc_now()
         if "created_at" not in user_dict:
             user_dict["created_at"] = utc_now()
-        
-        self.collection.update_one(
-            {"$or": [{"_id": user_id}, {"id": user_id}]},
-            {"$set": user_dict},
-            upsert=True,
-        )
-        doc = self.collection.find_one({"$or": [{"_id": user_id}, {"id": user_id}]})
+            
+        if user_id:
+            self.collection.update_one(
+                {"$or": [{"_id": user_id}, {"id": user_id}]},
+                {"$set": user_dict},
+                upsert=True,
+            )
+            doc = self.collection.find_one({"$or": [{"_id": user_id}, {"id": user_id}]})
+        else:
+            if "id" in user_dict:
+                del user_dict["id"]
+            result = self.collection.insert_one(user_dict)
+            doc = self.collection.find_one({"_id": result.inserted_id})
+            
         return serialize_doc(doc)
 
 

@@ -122,3 +122,78 @@ def seed_demo_data(force: bool = False) -> Dict[str, Any]:
         "hotel": hotel,
         "message": "Demo trip (Ahmedabad -> Delhi -> London) successfully seeded.",
     }
+
+def seed_user_trip(user_id: str, user_name: str) -> Dict[str, Any]:
+    """
+    Seeds customized demo trips (Ahmedabad -> Lahore) for a newly registered user.
+    Creates 3 direct flights with different timings/dates as requested.
+    """
+    base_now = datetime.now(timezone.utc)
+    
+    # Clean old demo records if any exist
+    try:
+        timeline_repo.collection.delete_many({"trip_id": {"$regex": f"^trip-{user_id}"}})
+        rebooking_repo.collection.delete_many({"trip_id": {"$regex": f"^trip-{user_id}"}})
+        disruption_repo.collection.delete_many({"trip_id": {"$regex": f"^trip-{user_id}"}})
+    except Exception:
+        pass
+
+    trips_created = []
+
+    # Create 3 trips with different timings
+    for i, days_offset in enumerate([1, 7, 30]):
+        trip_id = f"trip-{user_id}-amd-lhe-{i+1}"
+        hotel_id = f"hotel-{user_id}-lhe-{i+1}"
+
+        check_in = base_now + timedelta(days=days_offset, hours=8)
+        check_out = check_in + timedelta(days=4)
+
+        hotel_doc = {
+            "id": hotel_id,
+            "trip_id": trip_id,
+            "hotel_name": "Pearl Continental Hotel, Lahore",
+            "city": "Lahore",
+            "address": "Shahrah-e-Quaid-e-Azam, Lahore",
+            "check_in": check_in,
+            "check_out": check_out,
+            "room_type": "Deluxe Room",
+            "booking_reference": f"PC-LHE-{9921+i}",
+            "status": "CONFIRMED",
+            "contact_phone": "+92 42 111 505 505",
+        }
+        hotel_booking_repo.create(hotel_doc)
+
+        flight_dep = base_now + timedelta(days=days_offset, hours=2)
+        flight_arr = flight_dep + timedelta(hours=2, minutes=30)
+
+        trip_doc = {
+            "id": trip_id,
+            "user_id": user_id,
+            "title": f"Ahmedabad to Lahore Journey",
+            "origin": "AMD",
+            "destination": "LHE",
+            "status": "CONFIRMED",
+            "flights": [
+                {
+                    "flight_id": f"flight-{user_id}-amd-lhe-{i+1}",
+                    "airline": "Emirates",
+                    "flight_number": f"EK-{100+i}",
+                    "origin": "AMD",
+                    "destination": "LHE",
+                    "departure_time": flight_dep,
+                    "arrival_time": flight_arr,
+                    "status": "SCHEDULED",
+                    "seat": f"{14+i}A",
+                    "gate": f"{5+i}",
+                    "terminal": "T2",
+                    "class_of_service": "Economy",
+                }
+            ],
+            "hotel_booking_ids": [hotel_id],
+        }
+
+        trip = trip_repo.create(trip_doc)
+        trips_created.append(trip)
+        logger.info("Custom demo data seeded: Trip %s for User %s", trip_id, user_id)
+
+    return {"trip": trips_created[0], "all_trips": trips_created}

@@ -67,7 +67,7 @@ class MockFlightSearchProvider(FlightSearchProvider):
             carrier_policy_compliant=True,
             connecting_flights=[
                 FlightSegment(
-                    flight_id="ai-403-amd-del",
+                    flight_id=f"ai-403-{origin.lower()}-del",
                     airline="Air India",
                     flight_number="AI-403",
                     origin=origin,
@@ -79,7 +79,7 @@ class MockFlightSearchProvider(FlightSearchProvider):
                     terminal="T1",
                 ),
                 FlightSegment(
-                    flight_id="ai-161-del-lhr",
+                    flight_id=f"ai-161-del-{destination.lower()}",
                     airline="Air India",
                     flight_number="AI-161",
                     origin="DEL",
@@ -115,7 +115,7 @@ class MockFlightSearchProvider(FlightSearchProvider):
             carrier_policy_compliant=False,
             connecting_flights=[
                 FlightSegment(
-                    flight_id="ek-539-amd-dxb",
+                    flight_id=f"ek-539-{origin.lower()}-dxb",
                     airline="Emirates",
                     flight_number="EK-539",
                     origin=origin,
@@ -124,7 +124,7 @@ class MockFlightSearchProvider(FlightSearchProvider):
                     arrival_time=ek_leg1_arr,
                 ),
                 FlightSegment(
-                    flight_id="ek-001-dxb-lhr",
+                    flight_id=f"ek-001-dxb-{destination.lower()}",
                     airline="Emirates",
                     flight_number="EK-001",
                     origin="DXB",

@@ -96,6 +96,10 @@ class TripRepository(BaseRepository):
         )
         return True
 
+    def find_by_user(self, user_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        cursor = self.collection.find({"user_id": user_id}).sort("created_at", -1).limit(limit)
+        return [serialize_doc(doc) for doc in cursor]
+
     def list_all(self, limit: int = 50) -> List[Dict[str, Any]]:
         cursor = self.collection.find().sort("created_at", -1).limit(limit)
         return [serialize_doc(doc) for doc in cursor]

@@ -12,7 +12,7 @@ class BackendClient:
 
     async def get_trip(self, trip_id: str) -> Dict[str, Any]:
         """Fetch trip itinerary details from backend."""
-        url = f"{self.base_url}/api/trips/{trip_id}"
+        url = f"{self.base_url}/api/internal/trips/{trip_id}"
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(url)
             resp.raise_for_status()

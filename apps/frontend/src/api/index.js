@@ -8,7 +8,8 @@ import trips from './trips'
 import disruptions from './disruptions'
 import demo from './demo'
 import health from './health'
-import apiClient from './axios'
+import auth from './auth'
+import apiClient, { API_BASE_URL } from './axios'
 
 const api = {
   client: apiClient,
@@ -16,6 +17,8 @@ const api = {
   disruptions,
   demo,
   health,
+  auth,
+  API_BASE_URL,
 }
 
 export default api

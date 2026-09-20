@@ -72,3 +72,12 @@ async def record_notification(request: NotificationCreateRequest):
         "is_new": created,
         "message": "Notification recorded successfully" if created else "Notification already recorded (idempotent)",
     }
+
+
+@router.get("/trips/{trip_id}")
+async def internal_get_trip(trip_id: str):
+    """
+    Internal endpoint for worker to fetch trip details without user authentication.
+    """
+    from app.services.trip_service import trip_service
+    return trip_service.get_trip(trip_id)

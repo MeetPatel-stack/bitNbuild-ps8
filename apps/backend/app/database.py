@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from pymongo.database import Database
 from pymongo.collection import Collection
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
+import certifi
 
 from app.config import settings
 
@@ -24,6 +25,7 @@ class DatabaseManager:
                 connectTimeoutMS=5000,
                 socketTimeoutMS=10000,
                 retryWrites=True,
+                tlsCAFile=certifi.where(),
             )
             self._db = self._client[settings.mongodb_database]
             self._init_indexes()
